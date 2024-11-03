@@ -1,0 +1,8 @@
+
+
+# sourch file 
+node_modules
+
+
+# secure code file
+.env
