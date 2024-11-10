@@ -16,7 +16,12 @@ app.use(express.json());
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://rk-resturent.web.app",
+        "https://rk-resturent.firebaseapp.com",
+    ],
     credentials: true,
 }));
 // methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -54,6 +59,13 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
+const cookeOption = {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : 'strict',
+    secure: process.env.NODE_ENV === "production" ? true : false,
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -97,11 +109,7 @@ async function run() {
             if (result._id) {
                 const token = jwt.sign(email, secretKey, { expiresIn: '1h' });
                 res
-                    .cookie('RK_User_Token', token, {
-                        httpOnly: true,
-                        secure: false,
-                        // sameSite: 'none',
-                    })
+                    .cookie('RK_User_Token', token, cookeOption)
                     .send({ token: 'successful' })
             }
             else {
@@ -109,12 +117,17 @@ async function run() {
             }
         })
         // delete the cookie from cookies area
+        // app.post('/logoutJwt', (req, res) => {
+        //     res.clearCookie('RK_User_Token', {
+        //         httpOnly: true,
+        //         path: '/',
+        //         domain: 'localhost',
+        //      // maxAge: 0
+        //     });
+        //     res.send('hi');
+        // })
         app.post('/logoutJwt', (req, res) => {
-            res.clearCookie('RK_User_Token', {
-                httpOnly: true,
-                path: '/',
-                domain: 'localhost'
-            });
+            res.clearCookie('RK_User_Token', { ...cookeOption, maxAge: 0 });
             res.send('hi');
         })
 
